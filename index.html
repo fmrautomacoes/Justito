@@ -313,6 +313,10 @@ select.sel { border: 1.5px solid var(--line); background: var(--surface); color:
 .duas > * { min-width: 0; }
 .chips.mini { gap: 6px; }
 .chips.mini .chip { min-height: 36px; font-size: 13px; padding-right: 10px; }
+.passos { display: flex; justify-content: center; gap: 8px; }
+.passos span { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.passos span.on { background: var(--azul); width: 22px; border-radius: 4px; }
+.caixa { width: 100%; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 14px; padding: 12px; font: inherit; font-size: 16px; resize: vertical; }
 </style>
 </head>
 <body>
@@ -337,6 +341,7 @@ select.sel { border: 1.5px solid var(--line); background: var(--surface); color:
     ["Porções", "Batata frita", 38], ["Porções", "Torresmo", 42], ["Porções", "Pastel", 32], ["Porções", "Frango a passarinho", 46]
   ];
   const KEY = "justito.v1";
+  const SUGESTAO_WHATS = ""; // número do WhatsApp que recebe as sugestões (só dígitos, com 55 e DDD); vazio = a pessoa escolhe o contato
   const LINHA = 124;
 
   // ---------- dados salvos no aparelho ----------
@@ -577,6 +582,7 @@ select.sel { border: 1.5px solid var(--line); background: var(--surface); color:
           : `<p class="vazio-msg small">As contas que vocês fecharem aparecem aqui.</p>`}
       </section>
       ${armazenamentoOk ? "" : `<div class="banner alerta">Este navegador não deixou salvar os dados. Se fechar a página, a mesa se perde.</div>`}
+      <button class="btn ghost block" data-a="sugestao">💬 Mandar uma sugestão</button>
       <p class="proto-note">Versão de teste. Tudo fica salvo só neste celular, sem cadastro.</p>
     </div>`;
   }
@@ -742,9 +748,11 @@ select.sel { border: 1.5px solid var(--line); background: var(--surface); color:
       <section class="card">
         <div class="toggle-row"><span class="d"><b>Som do Tito</b><br><span class="small muted">Toca quando você chama o Tito e quando lança um pedido.</span></span><button class="switch" role="switch" aria-checked="${D.som}" data-a="som" aria-label="Som do Tito"></button></div>
       </section>
+      <button class="btn ghost block" data-a="tutorial">Ver de novo como funciona</button>
+      <button class="btn ghost block" data-a="sugestao">💬 Mandar uma sugestão</button>
       <button class="btn ghost block" data-a="ir-privacidade">Privacidade</button>
       <button class="btn danger block" data-a="apagar-tudo">Apagar todos os dados deste celular</button>
-      <p class="small muted" style="text-align:center">Justito · versão de teste 0.1</p>
+      <p class="small muted" style="text-align:center">Justito · versão de teste 0.2</p>
     </div>`;
   }
 
@@ -910,6 +918,33 @@ select.sel { border: 1.5px solid var(--line); background: var(--surface); color:
     else fecharFolha();
   }
 
+  // tutorial do Tito: aparece na primeira mesa
+  const PASSOS = [
+    ["👆", "Toque numa pessoa", "para pedir em nome dela. O pedido vira uma ficha na frente dela."],
+    ["🍟", "Toque no centro da mesa", "para pedir algo para dividir. Nasce para a mesa toda; depois, tocando na ficha, você tira quem não consumiu."],
+    ["✏️", "Errou?", "Logo depois de lançar aparece Desfazer. E toda ficha tem Corrigir."],
+    ["🧾", "Me chame para o resto", "Hey Tito! Eu mostro a conta, fecho a parte de quem vai embora e fecho a conta no fim."]
+  ];
+  function folhaTutorial(i) {
+    F = { tipo: "tutorial", i };
+    const [ic, t, d] = PASSOS[i], ult = i === PASSOS.length - 1;
+    abrirFolha(`
+      <div class="fala-garcom">${titoSVG()}<div class="b">${i === 0 ? "Bem-vindo à mesa! Rapidinho:" : `Passo ${i + 1} de ${PASSOS.length}`}</div></div>
+      <div class="card" style="align-items:flex-start"><span style="font-size:34px" aria-hidden="true">${ic}</span><b class="h2">${esc(t)}</b><p>${esc(d)}</p></div>
+      <div class="passos" aria-hidden="true">${PASSOS.map((_, j) => `<span class="${j === i ? "on" : ""}"></span>`).join("")}</div>
+      <button class="btn tampa block" data-a="${ult ? "tut-fim" : "tut-prox"}">${ult ? "Bora!" : "Próximo"}</button>
+      ${ult ? "" : `<button class="linkbtn" data-a="tut-fim" style="align-self:center">Pular</button>`}`);
+  }
+
+  function folhaSugestao() {
+    F = { tipo: "sugestao" };
+    abrirFolha(`
+      <div class="shead"><div class="d"><h2 class="h2">Mandar uma sugestão</h2><p class="small muted">O que melhorar, o que tirar, o que deu errado. Vale tudo.</p></div>${xBtn}</div>
+      <textarea id="sug-texto" class="caixa" rows="5" maxlength="1000" placeholder="Ex.: queria poder dividir a porção só pela metade"></textarea>
+      <button class="btn tampa block" data-a="sug-enviar">Enviar pelo WhatsApp</button>`);
+    const t = document.getElementById("sug-texto"); if (t) t.focus();
+  }
+
   function folhaGarcom() {
     F = { tipo: "garcom" };
     heyTito();
@@ -927,7 +962,7 @@ select.sel { border: 1.5px solid var(--line); background: var(--surface); color:
         <button class="opcao" data-a="g-fechar"><span class="ic" aria-hidden="true">💳</span><span class="d"><b>Fechar a conta</b><span>Cada um marca quanto pagou</span></span></button>
         <button class="opcao" data-a="chegou"><span class="ic" aria-hidden="true">➕</span><span class="d"><b>Chegou mais gente</b><span>Põe mais alguém na mesa</span></span></button>`}
       </div>
-      <button class="linkbtn red" data-a="cancelar-mesa" style="align-self:center">Apagar esta mesa sem fechar</button>`);
+      <div class="linha" style="justify-content:center;gap:18px"><button class="linkbtn" data-a="sugestao">💬 Sugestão</button><button class="linkbtn red" data-a="cancelar-mesa">Apagar esta mesa sem fechar</button></div>`);
   }
 
   function folhaQuem(acao) {
@@ -1063,7 +1098,18 @@ select.sel { border: 1.5px solid var(--line); background: var(--surface); color:
         if (!U.abrir.quem.includes(pid)) U.abrir.quem.push(pid);
         render(); { const i = document.getElementById("nova-pessoa"); if (i) i.focus(); } return;
       }
-      case "confirmar-abrir": abrirMesa(U.abrir.barId, U.abrir.quem); U.tela = "mesa"; window.scrollTo(0, 0); break;
+      case "confirmar-abrir": abrirMesa(U.abrir.barId, U.abrir.quem); U.tela = "mesa"; window.scrollTo(0, 0); if (!D.viuTutorial) { render(); folhaTutorial(0); return; } break;
+      case "tutorial": folhaTutorial(0); return;
+      case "tut-prox": folhaTutorial(F.i + 1); return;
+      case "tut-fim": D.viuTutorial = true; salvar(); fecharFolha(); return;
+      case "sugestao": folhaSugestao(); return;
+      case "sug-enviar": {
+        const t = campo("sug-texto").trim();
+        if (!t) { toast("Escreva a sua sugestão"); return; }
+        const txt = `Sugestão para o Justito, de ${nomeDe(D.dono)}:\n\n${t}`;
+        window.open(`https://wa.me/${SUGESTAO_WHATS}?text=${encodeURIComponent(txt)}`, "_blank", "noopener");
+        fecharFolha(); toast("Valeu pela sugestão!"); return;
+      }
       case "pessoa": if (pessoa(id).saiu) { toast(nomeDe(id) + " já foi embora e pagou a parte"); return; } folhaPedir(id); return;
       case "centro": folhaPedir("*"); return;
       case "ver": folhaVer(id, el.dataset.item); return;
