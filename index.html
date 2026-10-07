@@ -718,10 +718,82 @@ select.sel { border: 1.5px solid var(--line); background: var(--surface); color:
           <p class="small muted">A divisão justa cobra de cada um só o que consumiu. Na divisão igual, todo mundo pagaria ${$(igual)}.</p>
         </div>
       </article>
-      <button class="btn tampa block" data-a="compartilhar">Mandar o relatório no grupo</button>
+      <button class="btn tampa block" data-a="compartilhar-img">Mandar a imagem no grupo</button>
+      <button class="linkbtn" data-a="compartilhar" style="align-self:center">Mandar como texto</button>
       <button class="btn ghost block" data-a="home">Voltar ao início</button>
     </div>`;
   }
+  // cartão da conta em imagem (1080 × 1350), desenhado em SVG e convertido em PNG
+  const LINK_APP = "fmrautomacoes.github.io/Justito";
+  function svgCartao() {
+    const W = 1080, H = 1350, n = M.pessoas.length, total = totalMesa();
+    const topo = 430, rodape = 170, area = H - topo - rodape - 40, rh = Math.min(96, Math.floor(area / n)), av = Math.min(72, rh - 10);
+    const fs = Math.max(22, Math.min(38, rh * .42));
+    const defs = (document.querySelector("svg defs") || {}).outerHTML || "";
+    const corpo = svg => svg.replace(/^[\s\S]*?<svg[^>]*>/, "").replace(/<\/svg>[\s\S]*$/, "");
+    const linhas = M.pessoas.map((p, i) => {
+      const v = parte(p.id).total, s = r2((p.pago || 0) - v), y = topo + 30 + Math.max(0, (area - n * rh) / 2) + i * rh;
+      const st = p.pago === null ? "" : s < 0 ? `deve ${$(-s)}` : "pago ✓";
+      return `<g>
+        ${i % 2 ? "" : `<rect x="60" y="${y}" width="960" height="${rh}" rx="${rh / 2}" fill="#f1e5d5"/>`}
+        <svg x="${84}" y="${y + (rh - av) / 2}" width="${av}" height="${av}" viewBox="0 0 64 64">${corpo(avatar(p.id, av))}</svg>
+        <text x="${100 + av}" y="${y + rh / 2}" dominant-baseline="central" font-size="${fs}" font-weight="700" fill="#2b1a10">${esc(nomeDe(p.id))}</text>
+        ${st ? `<text x="${700}" y="${y + rh / 2}" dominant-baseline="central" text-anchor="end" font-size="${fs * .7}" font-weight="700" fill="${s < 0 ? "#c2361f" : "#1f7a4a"}">${esc(st)}</text>` : ""}
+        <text x="990" y="${y + rh / 2}" dominant-baseline="central" text-anchor="end" font-size="${fs}" font-weight="800" fill="#22396b">${esc($(v))}</text>
+      </g>`;
+    }).join("");
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Figtree, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+      ${defs}
+      <linearGradient id="mad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a4126"/><stop offset="1" stop-color="#4e2715"/></linearGradient>
+      <rect width="${W}" height="${H}" fill="#f6eee3"/>
+      <rect width="${W}" height="${topo}" fill="url(#mad)"/>
+      <circle cx="104" cy="104" r="40" fill="#ffca2c" stroke="#e39b00" stroke-width="6"/><text x="104" y="106" text-anchor="middle" dominant-baseline="central" font-size="44" font-weight="800" fill="#6a3a00">J</text>
+      <text x="164" y="106" dominant-baseline="central" font-size="48" font-weight="800" fill="#fbe8cb">Justito</text>
+      <svg x="850" y="40" width="180" height="223" viewBox="0 0 92 114">${corpo(titoSVG())}</svg>
+      <text x="64" y="215" font-size="44" font-weight="700" fill="#fbe8cb">${esc(M.barNome)}</text>
+      <text x="64" y="262" font-size="30" fill="#fbe8cb" opacity=".85">${esc(dia(M.fechadaEm || M.inicio))} · ${n} pessoas</text>
+      <text x="64" y="370" font-size="96" font-weight="800" fill="#ffd85c">${esc($(total))}</text>
+      ${linhas}
+      <rect y="${H - rodape}" width="${W}" height="${rodape}" fill="#4e2715"/>
+      <text x="540" y="${H - rodape + 66}" text-anchor="middle" font-size="36" font-weight="800" fill="#ffd85c">Conta dividida do jeito justo. Hey Tito!</text>
+      <text x="540" y="${H - rodape + 118}" text-anchor="middle" font-size="28" fill="#fbe8cb">${LINK_APP}</text>
+    </svg>`;
+  }
+  function pngCartao() {
+    return new Promise((ok, falha) => {
+      const img = new Image();
+      img.onload = () => {
+        const cv = document.createElement("canvas"); cv.width = 1080; cv.height = 1350;
+        cv.getContext("2d").drawImage(img, 0, 0);
+        cv.toBlob(b => b ? ok(b) : falha(new Error("sem imagem")), "image/png");
+      };
+      img.onerror = falha;
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgCartao());
+    });
+  }
+  async function compartilharImagem() {
+    try {
+      const blob = await pngCartao();
+      const arq = new File([blob], `justito-${(M.fechadaEm || M.inicio).slice(0, 10)}.png`, { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [arq] })) {
+        await navigator.share({ files: [arq], text: `Conta do ${M.barNome}, dividida pelo Tito. ${LINK_APP}` });
+        return;
+      }
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = arq.name;
+      document.body.appendChild(a); a.click(); a.remove();
+      toast("Imagem salva. Agora é só mandar no grupo");
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      toast("Não deu para gerar a imagem; mandei como texto");
+      compartilharTexto();
+    }
+  }
+  function compartilharTexto() {
+    const txt = textoRelatorio();
+    if (navigator.share) navigator.share({ text: txt }).catch(() => { /* cancelado */ });
+    else window.open("https://wa.me/?text=" + encodeURIComponent(txt), "_blank", "noopener");
+  }
+
   function textoRelatorio() {
     const l = [`Justito · ${M.barNome} · ${dia(M.fechadaEm || M.inicio)}`, `Conta da mesa: ${$(totalMesa())}`, ""];
     for (const p of M.pessoas) { const v = parte(p.id).total, s = r2((p.pago || 0) - v); l.push(`${nomeDe(p.id)}: ${$(v)}${s < 0 ? ` (deve ${$(-s)})` : s > 0 ? ` (pagou ${$(s)} a mais)` : ""}`); }
@@ -752,7 +824,7 @@ select.sel { border: 1.5px solid var(--line); background: var(--surface); color:
       <button class="btn ghost block" data-a="sugestao">💬 Mandar uma sugestão</button>
       <button class="btn ghost block" data-a="ir-privacidade">Privacidade</button>
       <button class="btn danger block" data-a="apagar-tudo">Apagar todos os dados deste celular</button>
-      <p class="small muted" style="text-align:center">Justito · versão de teste 0.2</p>
+      <p class="small muted" style="text-align:center">Justito · versão de teste 0.3</p>
     </div>`;
   }
 
@@ -1214,12 +1286,8 @@ select.sel { border: 1.5px solid var(--line); background: var(--surface); color:
       case "conta": folhaConta(); return;
       case "couvert": pessoa(id).couvert = !pessoa(id).couvert; render(); folhaConta(); return;
       case "servico": pessoa(id).servico = !pessoa(id).servico; render(); folhaConta(); return;
-      case "compartilhar": {
-        const txt = textoRelatorio();
-        if (navigator.share) { navigator.share({ text: txt }).catch(() => { /* cancelado */ }); }
-        else window.open("https://wa.me/?text=" + encodeURIComponent(txt), "_blank", "noopener");
-        return;
-      }
+      case "compartilhar-img": compartilharImagem(); return;
+      case "compartilhar": compartilharTexto(); return;
       case "salvar-dono": { const n = campo("aj-dono").trim().slice(0, 24); if (!n) return; cadastro(D.dono).nome = n; toast("Nome salvo"); break; }
       case "ir-bar": U.barEd = id; U.tela = "bar"; window.scrollTo(0, 0); break;
       case "tirar-item": { const b = bar(U.barEd); b.cardapio = b.cardapio.filter(i => i.id !== id); toast("Item tirado do cardápio"); break; }
