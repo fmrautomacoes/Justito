@@ -319,6 +319,8 @@ select.sel { border: 1.5px solid var(--line); background: var(--surface); color:
 .caixa { width: 100%; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 14px; padding: 12px; font: inherit; font-size: 16px; resize: vertical; }
 .qr-box { background: #fff; border-radius: 20px; padding: 14px; width: min(100%, 320px); align-self: center; box-shadow: 0 3px 0 var(--line); line-height: 0; }
 .qr-box svg { width: 100%; height: auto; display: block; }
+.fala-garcom.eco .b { font-size: 15px; line-height: 1.4; font-weight: 600; }
+.fala-garcom.eco .b b { color: var(--ok); }
 </style>
 </head>
 <body>
@@ -3011,6 +3013,18 @@ var qrcode = function() {
     </button>`}`;
   }
 
+  // quanto a divisão justa poupou em relação a dividir o total igualmente (só destaca quem economizou)
+  function economia() {
+    const n = M.pessoas.length, bruto = n ? totalMesa() / n : 0;
+    const quem = M.pessoas.map(p => ({ id: p.id, eco: bruto - parte(p.id).total })).filter(x => x.eco >= 0.5).sort((a, b) => b.eco - a.eco);
+    return { igual: r2(bruto), turma: r2(quem.reduce((a, x) => a + x.eco, 0)), quem: quem.map(x => ({ id: x.id, eco: r2(x.eco) })) };
+  }
+  function falaEconomia(e) {
+    if (!e.quem.length) return `Hoje a conta saiu quase igual para todo mundo. Mesmo assim, cada um pagou só o que consumiu.`;
+    const top = e.quem[0];
+    return `Dividindo igual, cada um pagaria ${$(e.igual)}. Com a divisão justa, quem consumiu menos economizou <b>${$(e.turma)}</b> no total. ${esc(nome(top.id))} foi quem mais economizou: ${$(top.eco)}.`;
+  }
+
   function telaRelatorio() {
     const total = totalMesa(), igual = r2(total / M.pessoas.length), pago = totalPago(), dif = r2(pago - total);
     const linhas = M.pessoas.map(p => ({ p, v: parte(p.id).total })).map(x => ({ ...x, s: r2((x.p.pago || 0) - x.v) }));
@@ -3019,6 +3033,7 @@ var qrcode = function() {
     ${topo("Conta fechada", "Relatório da mesa", "home")}
     <div class="wrap">
       ${dif === 0 ? `<div class="banner ok">Conta fechada sem diferença.</div>` : dif > 0 ? `<div class="banner info">A mesa pagou ${$(dif)} a mais que a conta.</div>` : `<div class="banner alerta">Ficou faltando ${$(-dif)} para fechar a conta.</div>`}
+      <div class="fala-garcom eco">${titoSVG()}<div class="b">${falaEconomia(economia())}</div></div>
       <article class="relatorio">
         <div class="top"><p class="eyebrow" style="color:inherit;opacity:.85">${dia(M.fechadaEm || M.inicio)} · ${esc(M.barNome)}</p><div class="h1 num">${$(total)}</div><p>${M.pessoas.length} pessoas · ${M.pedidos.length} pedidos</p></div>
         <div class="inner">
@@ -3028,7 +3043,7 @@ var qrcode = function() {
             ${sobra.map(x => `<div class="kv"><span>${esc(nome(x.p.id))} pagou a mais</span><span class="num saldo-ok">${$(x.s)}</span></div>`).join("")}</div>` : ""}
           <p class="eyebrow">Divisão justa × igual</p>
           <div class="tablex"><table><thead><tr><th>Quem</th><th>Justa</th><th>Igual</th><th>Diferença</th></tr></thead>
-          <tbody>${linhas.map(x => { const d = r2(x.v - igual); return `<tr><td>${esc(nome(x.p.id))}</td><td class="num">${$(x.v)}</td><td class="num">${$(igual)}</td><td class="num" style="color:${d > 0 ? "var(--alerta)" : "var(--ok)"}">${d > 0 ? "+" : ""}${$(d)}</td></tr>`; }).join("")}</tbody></table></div>
+          <tbody>${linhas.map(x => { const d = r2(x.v - igual); return `<tr><td>${esc(nome(x.p.id))}</td><td class="num">${$(x.v)}</td><td class="num">${$(igual)}</td><td class="num" style="color:${d > 0 ? "var(--muted)" : "var(--ok)"}">${d > 0 ? "+" : ""}${$(d)}</td></tr>`; }).join("")}</tbody></table></div>
           <p class="small muted">A divisão justa cobra de cada um só o que consumiu. Na divisão igual, todo mundo pagaria ${$(igual)}.</p>
         </div>
       </article>
@@ -3041,8 +3056,8 @@ var qrcode = function() {
   // cartão da conta em imagem (1080 × 1350), desenhado em SVG e convertido em PNG
   const LINK_APP = "fmrautomacoes.github.io/Justito";
   function svgCartao() {
-    const W = 1080, H = 1350, n = M.pessoas.length, total = totalMesa();
-    const topo = 430, rodape = 170, area = H - topo - rodape - 40, rh = Math.min(96, Math.floor(area / n)), av = Math.min(72, rh - 10);
+    const W = 1080, H = 1350, n = M.pessoas.length, total = totalMesa(), e = economia(), faixa = e.quem.length ? 110 : 0;
+    const topo = 430, rodape = 170, area = H - topo - rodape - 40 - faixa, rh = Math.min(96, Math.floor(area / n)), av = Math.min(72, rh - 10);
     const fs = Math.max(22, Math.min(38, rh * .42));
     const defs = (document.querySelector("svg defs") || {}).outerHTML || "";
     const corpo = svg => svg.replace(/^[\s\S]*?<svg[^>]*>/, "").replace(/<\/svg>[\s\S]*$/, "");
@@ -3069,6 +3084,8 @@ var qrcode = function() {
       <text x="64" y="262" font-size="30" fill="#fbe8cb" opacity=".85">${esc(dia(M.fechadaEm || M.inicio))} · ${n} pessoas</text>
       <text x="64" y="370" font-size="96" font-weight="800" fill="#ffd85c">${esc($(total))}</text>
       ${linhas}
+      ${faixa ? `<rect x="60" y="${H - rodape - faixa}" width="960" height="86" rx="43" fill="#fff0c4" stroke="#f5b800" stroke-width="3"/>
+      <text x="540" y="${H - rodape - faixa + 43}" text-anchor="middle" dominant-baseline="central" font-size="34" font-weight="800" fill="#5a3300">Quem consumiu menos economizou ${esc($(e.turma))}</text>` : ""}
       <rect y="${H - rodape}" width="${W}" height="${rodape}" fill="#4e2715"/>
       <text x="540" y="${H - rodape + 66}" text-anchor="middle" font-size="36" font-weight="800" fill="#ffd85c">Conta dividida do jeito justo. Hey Tito!</text>
       <text x="540" y="${H - rodape + 118}" text-anchor="middle" font-size="28" fill="#fbe8cb">${LINK_APP}</text>
@@ -3160,6 +3177,7 @@ var qrcode = function() {
         ${p[2] ? `<div class="kv small muted"><span>Couvert</span><span class="num">${$(p[2])}</span></div>` : ""}
         ${p[3] ? `<div class="kv small muted"><span>Taxa de serviço</span><span class="num">${$(p[3])}</span></div>` : ""}
         <div class="kv total"><span>Total</span><span class="num">${$(p[1])}</span></div>
+        ${(() => { const ig = r2(c.t / c.p.length), eco = r2(ig - p[1]); return eco >= 0.5 ? `<div class="banner ok">Dividindo igual, cada um pagaria ${$(ig)}. Com a divisão justa, ${esc(p[0])} economizou ${$(eco)}.</div>` : ""; })()}
       </section>` : `<p class="vazio-msg small">Toque no seu nome para ver o que foi pedido para você.</p>`}
       <div class="card"><div class="kv total" style="border:0;padding:0"><span>Conta da mesa</span><span class="num">${$(c.t)}</span></div></div>
       <section class="aberta">
@@ -3173,6 +3191,8 @@ var qrcode = function() {
   function textoRelatorio() {
     const l = [`Justito · ${M.barNome} · ${dia(M.fechadaEm || M.inicio)}`, `Conta da mesa: ${$(totalMesa())}`, ""];
     for (const p of M.pessoas) { const v = parte(p.id).total, s = r2((p.pago || 0) - v); l.push(`${nomeDe(p.id)}: ${$(v)}${s < 0 ? ` (deve ${$(-s)})` : s > 0 ? ` (pagou ${$(s)} a mais)` : ""}`); }
+    const e = economia();
+    if (e.quem.length) l.push("", `Dividindo igual, cada um pagaria ${$(e.igual)}. Com a divisão justa, quem consumiu menos economizou ${$(e.turma)} no total.`);
     l.push("", "Dividido de um jeito justo pelo Tito. Hey Tito!");
     return l.join("\n");
   }
@@ -3206,7 +3226,7 @@ var qrcode = function() {
         <label class="btn ghost block" style="cursor:pointer">Recuperar de uma cópia<input type="file" id="backup-arq" accept=".json,application/json" hidden></label>
       </section>
       <button class="btn danger block" data-a="apagar-tudo">Apagar todos os dados deste celular</button>
-      <p class="small muted" style="text-align:center">Justito · versão de teste 0.5.1</p>
+      <p class="small muted" style="text-align:center">Justito · versão de teste 0.6</p>
     </div>`;
   }
 
