@@ -2809,7 +2809,19 @@ var qrcode = function() {
       else { ind += tot; linhas.push({ o, v: tot, div: 1 }); }
     }
     const consumo = ind + col, couvert = p.couvert ? M.couvert : 0, servico = p.servico ? consumo * M.taxa : 0;
-    return { ind: r2(ind), col: r2(col), couvert, servico: r2(servico), total: r2(ind + col + couvert + servico), linhas };
+    return { ind: r2(ind), col: r2(col), couvert, servico: r2(servico), total: centavos()[id], bruto: ind + col + couvert + servico, linhas };
+  }
+  // reparte os centavos para a soma das partes bater com o total da mesa (maiores restos ganham o centavo)
+  function centavos() {
+    const brutos = M.pessoas.map(p => { const v = parteBruta(p.id) * 100, c = Math.floor(v + 1e-6); return { id: p.id, c, resto: v - c }; });
+    let falta = Math.round(brutos.reduce((a, x) => a + x.c + x.resto, 0)) - brutos.reduce((a, x) => a + x.c, 0);
+    brutos.slice().sort((a, b) => b.resto - a.resto).forEach(x => { if (falta > 0) { x.c++; falta--; } });
+    const r = {}; brutos.forEach(x => r[x.id] = x.c / 100); return r;
+  }
+  function parteBruta(id) {
+    const p = pessoa(id); let consumo = 0;
+    for (const o of M.pedidos) if (o.quem.includes(id)) consumo += o.it.preco * o.qtd / (o.col ? o.quem.length : 1);
+    return consumo + (p.couvert ? M.couvert : 0) + (p.servico ? consumo * M.taxa : 0);
   }
   const totalMesa = () => r2(M.pessoas.reduce((a, p) => a + parte(p.id).total, 0));
   const totalPago = () => r2(M.pessoas.reduce((a, p) => a + (p.pago || 0), 0));
@@ -3194,7 +3206,7 @@ var qrcode = function() {
         <label class="btn ghost block" style="cursor:pointer">Recuperar de uma cópia<input type="file" id="backup-arq" accept=".json,application/json" hidden></label>
       </section>
       <button class="btn danger block" data-a="apagar-tudo">Apagar todos os dados deste celular</button>
-      <p class="small muted" style="text-align:center">Justito · versão de teste 0.4</p>
+      <p class="small muted" style="text-align:center">Justito · versão de teste 0.5</p>
     </div>`;
   }
 
