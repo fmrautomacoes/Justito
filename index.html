@@ -2639,9 +2639,10 @@ var qrcode = function() {
   const CATCOR = { "Cervejas e chopes": ["#f2ebdf", "#5a3418"], "Drinks e doses": ["#9b4fd0", "#ffffff"], "Sem álcool": ["#18a0ad", "#ffffff"], "Porções": ["#e0473a", "#3a2214"], "Outros": ["#6d7f99", "#ffffff"] };
   // cardápio de exemplo para bar novo (preços editáveis)
   const EXEMPLO = [
-    ["Cervejas e chopes", "Cerveja 600 ml", 15.9], ["Cervejas e chopes", "Chope 300 ml", 9.9], ["Cervejas e chopes", "Long neck", 10],
-    ["Drinks e doses", "Caipirinha", 22], ["Drinks e doses", "Dose de cachaça", 9],
-    ["Sem álcool", "Água", 5.5], ["Sem álcool", "Refrigerante lata", 7], ["Sem álcool", "Suco", 12],
+    ["Cervejas e chopes", "Stella Artois 600 ml", 16, "STEL"], ["Cervejas e chopes", "Stella Pure Gold 600 ml", 17, "GOLD"],
+    ["Cervejas e chopes", "Heineken 600 ml", 18, "HEIN"], ["Cervejas e chopes", "Original 600 ml", 15, "ORIG"],
+    ["Drinks e doses", "Rum Ouro (dose)", 12, "RUM"],
+    ["Sem álcool", "Coca-Cola lata 350 ml", 7, "COCA"], ["Sem álcool", "Coca-Cola KS 290 ml", 6, "KS"], ["Sem álcool", "Água", 5.5],
     ["Porções", "Batata frita", 38], ["Porções", "Torresmo", 42], ["Porções", "Pastel", 32], ["Porções", "Frango a passarinho", 46]
   ];
   const KEY = "justito.v1";
@@ -2783,7 +2784,7 @@ var qrcode = function() {
   }
   function novoItem(cat, n, preco) { return { id: uid(), cat, nome: n, sig: sigla(n), preco: r2(preco) }; }
   function novoBar(n, couvert, taxa, exemplo) {
-    const b = { id: uid(), nome: n.trim().slice(0, 40), couvert: r2(couvert || 0), taxa: (taxa || 0) / 100, cardapio: exemplo ? EXEMPLO.map(([c, nm, p]) => novoItem(c, nm, p)) : [], contagem: {} };
+    const b = { id: uid(), nome: n.trim().slice(0, 40), couvert: r2(couvert || 0), taxa: (taxa || 0) / 100, cardapio: exemplo ? EXEMPLO.map(([c, nm, p, sg]) => Object.assign(novoItem(c, nm, p), sg ? { sig: sg } : {})) : [], contagem: {} };
     D.bares.push(b);
     return b;
   }
@@ -3226,7 +3227,7 @@ var qrcode = function() {
         <label class="btn ghost block" style="cursor:pointer">Recuperar de uma cópia<input type="file" id="backup-arq" accept=".json,application/json" hidden></label>
       </section>
       <button class="btn danger block" data-a="apagar-tudo">Apagar todos os dados deste celular</button>
-      <p class="small muted" style="text-align:center">Justito · versão de teste 0.6</p>
+      <p class="small muted" style="text-align:center">Justito · versão de teste 0.6.1</p>
     </div>`;
   }
 
