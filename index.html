@@ -2769,7 +2769,18 @@ var qrcode = function() {
       });
     } catch (e) { /* sem áudio */ }
   }
-  const heyTito = () => { tocar([[659, 0, .14], [784, .12, .14], [1047, .25, .34]]); vibrar(20); };
+  // voz do Tito (hey-tito.mp3); se o áudio não tocar, cai no "plim" sintetizado
+  let vozTito = null;
+  const heyTito = () => {
+    vibrar(20);
+    if (!D.som) return;
+    try {
+      vozTito = vozTito || new Audio("hey-tito.mp3");
+      vozTito.currentTime = 0;
+      const p = vozTito.play();
+      if (p && p.catch) p.catch(() => tocar([[659, 0, .14], [784, .12, .14], [1047, .25, .34]]));
+    } catch (e) { tocar([[659, 0, .14], [784, .12, .14], [1047, .25, .34]]); }
+  };
   const plim = () => { tocar([[1319, 0, .28]]); vibrar(30); };
 
   // ---------- cadastros ----------
@@ -3227,7 +3238,7 @@ var qrcode = function() {
         <label class="btn ghost block" style="cursor:pointer">Recuperar de uma cópia<input type="file" id="backup-arq" accept=".json,application/json" hidden></label>
       </section>
       <button class="btn danger block" data-a="apagar-tudo">Apagar todos os dados deste celular</button>
-      <p class="small muted" style="text-align:center">Justito · versão de teste 0.6.1</p>
+      <p class="small muted" style="text-align:center">Justito · versão de teste 0.6.2</p>
     </div>`;
   }
 
