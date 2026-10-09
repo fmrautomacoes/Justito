@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Justito</title>
-<meta name="description" content="Justito: a conta do bar dividida do jeito justo. Hey Tito!">
+<title>JusTito</title>
+<meta name="description" content="JusTito: a conta do bar dividida do jeito justo. Hey Tito!">
 <meta name="theme-color" content="#4e2715">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -321,6 +321,23 @@ select.sel { border: 1.5px solid var(--line); background: var(--surface); color:
 .qr-box svg { width: 100%; height: auto; display: block; }
 .fala-garcom.eco .b { font-size: 15px; line-height: 1.4; font-weight: 600; }
 .fala-garcom.eco .b b { color: var(--ok); }
+/* v0.7: marca JusTito, conta geral, fechamento */
+.ti { color: var(--azul); }
+.brand .ti { color: var(--azul); }
+.relatorio .top { position: relative; }
+.relatorio .top .selo { position: absolute; top: 12px; right: 14px; font-family: var(--display); font-weight: 800; font-size: 15px; color: var(--creme); opacity: .9; }
+.relatorio .top .selo .ti, .aberta .ti, .hero .ti { color: #ffd85c; }
+.centro .marca { font-family: var(--display); font-weight: 800; font-size: 12px; letter-spacing: .01em; color: #d99a00; text-shadow: 0 1px 0 rgba(255,255,255,.6), 0 -1px 0 rgba(140,80,0,.35); line-height: 1; }
+.centro .marca .ti { color: #c78300; }
+.pt-cab { align-items: flex-start; }
+.pt-titulo { font-family: var(--display); font-size: 17px; line-height: 1.2; color: var(--azul); }
+.pt-sair { flex: none; width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--surface-2); color: var(--ink); font-weight: 800; font-size: 15px; }
+.acoes-pessoa { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.acoes-pessoa .btn { min-width: 0; padding-inline: 8px; }
+.somar { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--azul-soft); color: var(--azul); font-size: 24px; font-weight: 800; line-height: 1; }
+.notinha { background: var(--surface); border: 1.5px dashed var(--line); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; font-variant-numeric: tabular-nums; }
+.notinha .kv.sub { border-top: 1.5px dashed var(--line); margin-top: 6px; padding-top: 8px; }
+.conta-geral-btn { display: flex; flex-direction: column; align-items: stretch; gap: 4px; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -2669,7 +2686,9 @@ var qrcode = function() {
   const hora = t => new Date(t).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   const dia = t => new Date(t).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-  const valor = s => { s = String(s || "").trim().replace(/[^\d,.]/g, ""); if (s.includes(",")) s = s.replace(/\./g, "").replace(",", "."); return parseFloat(s); };
+  const valor1 = s => { s = String(s || "").trim().replace(/[^\d,.]/g, ""); if (s.includes(",")) s = s.replace(/\./g, "").replace(",", "."); return parseFloat(s); };
+  // aceita conta de somar: "50+20,50" = 70,50
+  const valor = s => { const ps = String(s || "").split("+").map(x => x.trim()).filter(Boolean); if (ps.length < 2) return valor1(s); let t = 0; for (const x of ps) { const v = valor1(x); if (!isFinite(v)) return NaN; t += v; } return r2(t); };
   const dec = v => v ? String(r2(v).toFixed(2)).replace(".", ",") : "";
   const sigla = n => n.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z]/g, "").slice(0, 4).toUpperCase() || "ITEM";
   const cadastro = id => D.pessoas.find(p => p.id === id);
@@ -2680,6 +2699,8 @@ var qrcode = function() {
   const presentes = () => M.pessoas.filter(p => !p.saiu);
   const turma = () => D.pessoas.filter(p => !p.oculto).map(p => p.id);
   const ordenar = ids => ids.slice().sort((a, b) => a === D.dono ? -1 : b === D.dono ? 1 : nomeDe(a).localeCompare(nomeDe(b), "pt-BR"));
+  // a marca: "Jus" + "Tito" em destaque
+  const logo = () => `<span class="logo">Jus<span class="ti">Tito</span></span>`;
   function hash(s) { let h = 7; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; }
 
   // ---------- volume: degradês compartilhados ----------
@@ -2875,7 +2896,7 @@ var qrcode = function() {
   function telaInicio() {
     return `
     <div class="wrap">
-      <div class="brand"><span class="cap" aria-hidden="true">J</span>Justito</div>
+      <div class="brand"><span class="cap" aria-hidden="true">J</span>${logo()}</div>
       <section class="hero">
         <div><p class="eyebrow" style="color:inherit;opacity:.85">Hey Tito!</p><h1 class="h1">Oi! Eu sou o Tito, o garçom da sua turma.</h1></div>
         <span class="hero-tito" aria-hidden="true">${titoSVG()}</span>
@@ -2893,7 +2914,7 @@ var qrcode = function() {
     M = D.mesa;
     return `
     <div class="wrap">
-      <div class="linha"><div class="brand d"><span class="cap" aria-hidden="true">J</span>Justito <span class="badge b-tampa">teste</span></div><button class="btn ghost sm" data-a="ir-ajustes">Ajustes</button></div>
+      <div class="linha"><div class="brand d"><span class="cap" aria-hidden="true">J</span>${logo()} <span class="badge b-tampa">teste</span></div><button class="btn ghost sm" data-a="ir-ajustes">Ajustes</button></div>
       ${M ? `<section class="aberta">
           <p class="eyebrow" style="color:inherit;opacity:.85">Mesa aberta · desde ${hora(M.inicio)}</p>
           <b class="h2" style="color:inherit">${esc(M.barNome)}</b>
@@ -2986,7 +3007,6 @@ var qrcode = function() {
     for (let r = 3; r < linhas; r += 3) emendas.push(`<span class="emenda" style="top:${12 + r * LINHA}px" aria-hidden="true"></span>`);
     const eu = pessoa(D.dono);
     const falta = r2(totalMesa() - totalPago());
-    const conf = conferencia();
     const todosMarcaram = M.pessoas.every(p => p.pago !== null);
     return `
     <div class="topbar">
@@ -2995,12 +3015,10 @@ var qrcode = function() {
       <button class="iconbtn" data-a="conta" aria-label="Ver a conta">🧾</button>
     </div>
     ${pagar ? `<div class="pagamento-topo card">
+        <div class="linha pt-cab"><b class="d pt-titulo">Toque na pessoa para marcar quanto ela pagou</b><button class="pt-sair" data-a="voltar-pedir" aria-label="Sair do fechamento" title="Sair do fechamento">✕</button></div>
         <div class="kv"><span>Conta da mesa</span><b class="num">${$(totalMesa())}</b></div>
         <div class="kv"><span>Já pago</span><b class="num">${$(totalPago())}</b></div>
         <div class="kv total"><span>${falta > 0 ? "Falta pagar" : falta < 0 ? "Pago a mais" : "Tudo certo"}</span><span class="num" style="color:${falta > 0 ? "var(--alerta)" : "var(--ok)"}">${$(Math.abs(falta))}</span></div>
-        ${conf.dif === null ? `<button class="btn ghost sm block" data-a="conferir">Conferir com a conta impressa do bar</button>`
-          : `<div class="banner ${conf.dif === 0 ? "ok" : "alerta"}">${conf.dif === 0 ? "A conta do bar bate com o que a mesa lançou." : `A conta do bar veio ${$(Math.abs(conf.dif))} ${conf.dif > 0 ? "acima" : "abaixo"} do que a mesa lançou.`} <button class="linkbtn" data-a="conferir">Ver</button></div>`}
-        <p class="small muted">Toque em cada pessoa para marcar quanto ela pagou.</p>
       </div>` : ""}
     <div class="salao">
       <div class="cena">
@@ -3009,6 +3027,7 @@ var qrcode = function() {
           ${emendas.join("")}
           ${zonas.join("")}
           <button class="centro" data-a="${pagar ? "nada" : "centro"}" aria-label="Centro da mesa: pedir para dividir">
+            <span class="marca" aria-hidden="true">${logo()}</span>
             <span class="rot">Centro<br>da mesa</span>
             <span class="fichas">${Object.keys(gc).map(k => `<span role="button" tabindex="0" data-a="ver" data-id="*" data-item="${k}" aria-label="${esc(gc[k].it.nome)} para dividir">${ficha(gc[k].it, gc[k].q)}</span>`).join("")}</span>
             ${pagar ? "" : `<span class="add" aria-hidden="true">+</span>`}
@@ -3018,7 +3037,7 @@ var qrcode = function() {
       </div>
     </div>
     <button class="garcom" data-a="garcom" aria-label="Chamar o Tito, o garçom">${M.fala ? `<span class="fala">${esc(M.fala)}</span>` : ""}${titoSVG()}</button>
-    ${pagar ? `<div class="gaveta"><button class="btn tampa block" data-a="concluir" ${todosMarcaram ? "" : "disabled"}>${todosMarcaram ? "Fechar a mesa e ver o relatório" : "Marque o pagamento de todos"}</button></div>` :
+    ${pagar ? `<div class="gaveta"><button class="btn tampa block" data-a="concluir">${todosMarcaram ? "Fechar a mesa e ver o relatório" : `Fechar a mesa · falta marcar ${M.pessoas.filter(p => p.pago === null).length}`}</button></div>` :
     `<button class="gaveta" data-a="conta" aria-label="Ver a conta">
       <span class="c"><span class="l">Conta da mesa</span><br><span class="v num">${$(totalMesa())}</span></span>
       ${eu ? `<span class="me"><span class="l small" style="font-weight:800">${eu.saiu ? "Você já fechou" : "Sua parte"}</span><br><span class="v num" style="font-family:var(--display);font-weight:800;font-size:clamp(21px, 6.6vw, 28px);line-height:1.05">${$(parte(D.dono).total)}</span></span>` : ""}
@@ -3037,7 +3056,24 @@ var qrcode = function() {
     return `Dividindo igual, cada um pagaria ${$(e.igual)}. Com a divisão justa, quem consumiu menos economizou <b>${$(e.turma)}</b> no total. ${esc(nome(top.id))} foi quem mais economizou: ${$(top.eco)}.`;
   }
 
+  // a conta geral, como a notinha do bar: itens somados, sem nomes
+  function htmlNotinha() {
+    const g = {};
+    for (const o of M.pedidos) { const k = o.it.nome + "|" + o.it.preco; g[k] = g[k] || { nome: o.it.nome, preco: o.it.preco, q: 0 }; g[k].q += o.qtd; }
+    const c = conferencia(), itens = Object.values(g).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    return `<div class="notinha">
+      ${itens.map(x => `<div class="kv"><span>${x.q}× ${esc(x.nome)} <span class="muted small num">${$(x.preco)}</span></span><span class="num">${$(x.preco * x.q)}</span></div>`).join("") || `<p class="small muted">Nada pedido ainda.</p>`}
+      <div class="kv sub"><span>Pedidos</span><span class="num">${$(c.consumo)}</span></div>
+      ${M.couvert ? `<div class="kv"><span>Couvert (${M.pessoas.length} × ${$(M.couvert)})</span><span class="num">${$(c.couvert)}</span></div>` : ""}
+      <div class="kv"><span>Taxa de serviço ${Math.round(M.taxa * 100)}%</span><span class="num">${$(c.servico)}</span></div>
+      <div class="kv total"><span>O bar deveria cobrar</span><span class="num">${$(c.cheia)}</span></div>
+    </div>
+    ${totalMesa() !== c.cheia ? `<p class="small muted">A mesa ${M.fechadaEm ? "pagou" : "vai pagar"} ${$(totalMesa())}, porque nem todos pagam couvert ou taxa. A diferença de ${$(r2(c.cheia - totalMesa()))} se acerta com o garçom.</p>` : ""}`;
+  }
+  const chaveVista = (acao, v) => `<div class="seg" role="group" aria-label="Como ver a conta"><button data-a="${acao}" data-v="pessoa" aria-pressed="${v !== "geral"}">Por pessoa</button><button data-a="${acao}" data-v="geral" aria-pressed="${v === "geral"}">Conta geral</button></div>`;
+
   function telaRelatorio() {
+    const geral = U.relVista === "geral";
     const total = totalMesa(), igual = r2(total / M.pessoas.length), pago = totalPago(), dif = r2(pago - total);
     const linhas = M.pessoas.map(p => ({ p, v: parte(p.id).total })).map(x => ({ ...x, s: r2((x.p.pago || 0) - x.v) }));
     const devem = linhas.filter(x => x.s < 0), sobra = linhas.filter(x => x.s > 0);
@@ -3047,8 +3083,10 @@ var qrcode = function() {
       ${dif === 0 ? `<div class="banner ok">Conta fechada sem diferença.</div>` : dif > 0 ? `<div class="banner info">A mesa pagou ${$(dif)} a mais que a conta.</div>` : `<div class="banner alerta">Ficou faltando ${$(-dif)} para fechar a conta.</div>`}
       <div class="fala-garcom eco">${titoSVG()}<div class="b">${falaEconomia(economia())}</div></div>
       <article class="relatorio">
-        <div class="top"><p class="eyebrow" style="color:inherit;opacity:.85">${dia(M.fechadaEm || M.inicio)} · ${esc(M.barNome)}</p><div class="h1 num">${$(total)}</div><p>${M.pessoas.length} pessoas · ${M.pedidos.length} pedidos</p></div>
+        <div class="top"><span class="selo" aria-hidden="true">${logo()}</span><p class="eyebrow" style="color:inherit;opacity:.85">${dia(M.fechadaEm || M.inicio)} · ${esc(M.barNome)}</p><div class="h1 num">${$(total)}</div><p>${M.pessoas.length} pessoas · ${M.pedidos.length} pedidos</p></div>
         <div class="inner">
+          ${chaveVista("rel-vista", U.relVista)}
+          ${geral ? htmlNotinha() : `
           <div style="display:flex;flex-wrap:wrap;gap:4px">${M.pessoas.map(p => avatar(p.id, 38)).join("")}</div>
           ${devem.length || sobra.length ? `<div class="list"><p class="eyebrow">Acertos entre vocês</p>
             ${devem.map(x => `<div class="kv"><span>${esc(nome(x.p.id))} ficou devendo</span><span class="num saldo-mal">${$(-x.s)}</span></div>`).join("")}
@@ -3056,13 +3094,14 @@ var qrcode = function() {
           <p class="eyebrow">Divisão justa × igual</p>
           <div class="tablex"><table><thead><tr><th>Quem</th><th>Justa</th><th>Igual</th><th>Diferença</th></tr></thead>
           <tbody>${linhas.map(x => { const d = r2(x.v - igual); return `<tr><td>${esc(nome(x.p.id))}</td><td class="num">${$(x.v)}</td><td class="num">${$(igual)}</td><td class="num" style="color:${d > 0 ? "var(--muted)" : "var(--ok)"}">${d > 0 ? "+" : ""}${$(d)}</td></tr>`; }).join("")}</tbody></table></div>
-          <p class="small muted">A divisão justa cobra de cada um só o que consumiu. Na divisão igual, todo mundo pagaria ${$(igual)}.</p>
+          <p class="small muted">A divisão justa cobra de cada um só o que consumiu. Na divisão igual, todo mundo pagaria ${$(igual)}.</p>`}
         </div>
       </article>
       <button class="btn tampa block" data-a="compartilhar-img">Mandar a imagem no grupo</button>
       <button class="btn ghost block" data-a="qr-conta">📱 Mostrar a conta no QR</button>
       <button class="linkbtn" data-a="compartilhar" style="align-self:center">Mandar como texto</button>
-      <button class="btn ghost block" data-a="home">Voltar ao início</button>
+      ${D.mesa ? "" : `<button class="btn primary block" data-a="ir-abrir">Nova mesa</button>`}
+      <button class="linkbtn" data-a="home" style="align-self:center">Voltar ao início</button>
     </div>`;
   }
   // cartão da conta em imagem (1080 × 1350), desenhado em SVG e convertido em PNG
@@ -3090,7 +3129,7 @@ var qrcode = function() {
       <rect width="${W}" height="${H}" fill="#f6eee3"/>
       <rect width="${W}" height="${topo}" fill="url(#mad)"/>
       <circle cx="104" cy="104" r="40" fill="#ffca2c" stroke="#e39b00" stroke-width="6"/><text x="104" y="106" text-anchor="middle" dominant-baseline="central" font-size="44" font-weight="800" fill="#6a3a00">J</text>
-      <text x="164" y="106" dominant-baseline="central" font-size="48" font-weight="800" fill="#fbe8cb">Justito</text>
+      <text x="164" y="106" dominant-baseline="central" font-size="48" font-weight="800" fill="#fbe8cb">Jus<tspan fill="#ffd85c">Tito</tspan></text>
       <svg x="850" y="40" width="180" height="223" viewBox="0 0 92 114">${corpo(titoSVG())}</svg>
       <text x="64" y="215" font-size="44" font-weight="700" fill="#fbe8cb">${esc(M.barNome)}</text>
       <text x="64" y="262" font-size="30" fill="#fbe8cb" opacity=".85">${esc(dia(M.fechadaEm || M.inicio))} · ${n} pessoas</text>
@@ -3193,15 +3232,15 @@ var qrcode = function() {
       </section>` : `<p class="vazio-msg small">Toque no seu nome para ver o que foi pedido para você.</p>`}
       <div class="card"><div class="kv total" style="border:0;padding:0"><span>Conta da mesa</span><span class="num">${$(c.t)}</span></div></div>
       <section class="aberta">
-        <b class="h2" style="color:inherit">Gostou? Use o Justito na sua mesa.</b>
+        <b class="h2" style="color:inherit">Gostou? Use o JusTito na sua mesa.</b>
         <p>Divide a conta do jeito justo: cada um paga o que consumiu. Sem cadastro.</p>
-        <button class="btn tampa block" data-a="qr-sair">Abrir o Justito</button>
+        <button class="btn tampa block" data-a="qr-sair">Abrir o JusTito</button>
       </section>
     </div>`;
   }
 
   function textoRelatorio() {
-    const l = [`Justito · ${M.barNome} · ${dia(M.fechadaEm || M.inicio)}`, `Conta da mesa: ${$(totalMesa())}`, ""];
+    const l = [`JusTito · ${M.barNome} · ${dia(M.fechadaEm || M.inicio)}`, `Conta da mesa: ${$(totalMesa())}`, ""];
     for (const p of M.pessoas) { const v = parte(p.id).total, s = r2((p.pago || 0) - v); l.push(`${nomeDe(p.id)}: ${$(v)}${s < 0 ? ` (deve ${$(-s)})` : s > 0 ? ` (pagou ${$(s)} a mais)` : ""}`); }
     const e = economia();
     if (e.quem.length) l.push("", `Dividindo igual, cada um pagaria ${$(e.igual)}. Com a divisão justa, quem consumiu menos economizou ${$(e.turma)} no total.`);
@@ -3238,7 +3277,7 @@ var qrcode = function() {
         <label class="btn ghost block" style="cursor:pointer">Recuperar de uma cópia<input type="file" id="backup-arq" accept=".json,application/json" hidden></label>
       </section>
       <button class="btn danger block" data-a="apagar-tudo">Apagar todos os dados deste celular</button>
-      <p class="small muted" style="text-align:center">Justito · versão de teste 0.6.3</p>
+      <p class="small muted" style="text-align:center">JusTito · versão de teste 0.7</p>
     </div>`;
   }
 
@@ -3277,14 +3316,14 @@ var qrcode = function() {
     ${topo("Privacidade", "", D.dono ? "ir-ajustes" : "home")}
     <div class="wrap texto">
       <h2 class="h2">Seus dados ficam no seu celular</h2>
-      <p>O Justito não pede cadastro, e-mail nem senha. Os nomes da turma, os bares, os cardápios e as contas ficam guardados só neste aparelho, no armazenamento do navegador.</p>
-      <p>Nada disso é enviado para um servidor do Justito, vendido ou usado para propaganda. O app não usa sua localização, câmera ou contatos.</p>
+      <p>O JusTito não pede cadastro, e-mail nem senha. Os nomes da turma, os bares, os cardápios e as contas ficam guardados só neste aparelho, no armazenamento do navegador.</p>
+      <p>Nada disso é enviado para um servidor do JusTito, vendido ou usado para propaganda. O app não usa sua localização, câmera ou contatos.</p>
       <h2 class="h2">Quando você compartilha</h2>
       <p>Ao mandar o relatório no grupo, o texto vai pelo app que você escolher, como o WhatsApp, e passa a seguir as regras daquele app.</p>
       <h2 class="h2">Como apagar</h2>
       <p>Em Ajustes, toque em "Apagar todos os dados deste celular". Limpar os dados do navegador também apaga tudo.</p>
       <h2 class="h2">Pagamentos</h2>
-      <p>O Justito só faz a conta. Ele não recebe nem intermedeia pagamentos.</p>
+      <p>O JusTito só faz a conta. Ele não recebe nem intermedeia pagamentos.</p>
       <p class="small muted">Versão de teste. Este texto será revisado antes do lançamento nas lojas.</p>
     </div>`;
   }
@@ -3332,7 +3371,8 @@ var qrcode = function() {
       abrirFolha(`
         <div class="shead">${col ? `<span class="ficha parada" style="--fc:#f2b114;--fi:#5a3300;width:50px;height:50px">MESA</span>` : avatar(p.id, 54)}
           <div class="d"><h2 class="h2">${col ? "Para dividir no centro da mesa" : p.id === D.dono ? "Seu pedido" : "Pedido para " + esc(nomeDe(p.id))}</h2>
-          <p class="small muted">${col ? "Divide só entre quem estiver marcado." : `Até agora: <b class="num">${$(parte(p.id).total)}</b>`}</p></div>${xBtn}</div>
+          <p class="small muted">${col ? "Divide só entre quem estiver marcado." : `Até agora: <b class="num">${$(parte(p.id).total)}</b>${p.pago !== null ? ` · já pagou <b class="num">${$(p.pago)}</b>` : ""}`}</p></div>${xBtn}</div>
+        ${col ? "" : `<div class="acoes-pessoa"><button class="btn ghost sm" data-a="p-sair" data-id="${p.id}">🚪 Vai embora</button><button class="btn ghost sm" data-a="p-pagar" data-id="${p.id}">💳 Marcar pagamento</button></div>`}
         ${col && !F.escolher ? `<div class="banner info linha"><span class="d">Divide com ${F.quem.length === presentes().length ? "a mesa toda" : F.quem.length + " pessoas"}. Quem não consumir, você tira depois tocando na ficha.</span><button class="linkbtn" data-a="f-escolher">Escolher agora</button></div>` : ""}
         ${col && F.escolher ? `<div class="list"><div style="display:flex;justify-content:space-between;align-items:baseline"><b>Quem vai consumir</b><button class="linkbtn" data-a="f-todos">${F.quem.length === presentes().length ? "Limpar" : "Mesa toda"}</button></div>
           <div class="chips">${M.pessoas.map(x => `<button class="chip" data-a="f-quem" data-id="${x.id}" aria-pressed="${F.quem.includes(x.id)}" ${x.saiu ? "disabled" : ""}>${avatar(x.id, 30)} ${esc(nome(x.id))}</button>`).join("")}</div></div>` : ""}
@@ -3406,10 +3446,10 @@ var qrcode = function() {
 
   // tutorial do Tito: aparece na primeira mesa
   const PASSOS = [
-    ["👆", "Toque numa pessoa", "para pedir em nome dela. O pedido vira uma ficha na frente dela."],
+    ["👆", "Toque numa pessoa", "para pedir em nome dela. O pedido vira uma ficha na frente dela. Ali também dá para marcar quando ela vai embora ou paga."],
     ["🍟", "Toque no centro da mesa", "para pedir algo para dividir. Nasce para a mesa toda; depois, tocando na ficha, você tira quem não consumiu."],
     ["✏️", "Errou?", "Logo depois de lançar aparece Desfazer. E toda ficha tem Corrigir."],
-    ["🧾", "Me chame para o resto", "Hey Tito! Eu mostro a conta, fecho a parte de quem vai embora e fecho a conta no fim."]
+    ["🧾", "Me chame para o resto", "Hey Tito! Eu mostro o cardápio, a conta no QR e fecho a conta no fim. A notinha 🧾 lá em cima mostra a conta de cada um e a geral."]
   ];
   function folhaTutorial(i) {
     F = { tipo: "tutorial", i };
@@ -3441,10 +3481,8 @@ var qrcode = function() {
       <div class="opcoes">
         ${pagar ? `
         <button class="opcao" data-a="qr-conta"><span class="ic" aria-hidden="true">📱</span><span class="d"><b>Mostrar a conta no QR</b><span>Cada um aponta a câmera e vê a sua parte</span></span></button>
-        <button class="opcao" data-a="conferir"><span class="ic" aria-hidden="true">🧾</span><span class="d"><b>Conferir com a conta do bar</b><span>Compara a conta impressa com o que foi lançado</span></span></button>
         <button class="opcao" data-a="voltar-pedir"><span class="ic" aria-hidden="true">↩</span><span class="d"><b>Ainda vamos pedir</b><span>Volta para a mesa aberta</span></span></button>` : `
         <button class="opcao" data-a="g-cardapio"><span class="ic" aria-hidden="true">📋</span><span class="d"><b>Ver o cardápio</b><span>Escolhe para quem e pede</span></span></button>
-        <button class="opcao" data-a="conta"><span class="ic" aria-hidden="true">🧮</span><span class="d"><b>Ver a conta</b><span>Quanto deu para cada um</span></span></button>
         <button class="opcao" data-a="g-parcial"><span class="ic" aria-hidden="true">🚪</span><span class="d"><b>Alguém vai embora</b><span>Fecha a parte de quem sai e a mesa segue</span></span></button>
         <button class="opcao" data-a="g-fechar"><span class="ic" aria-hidden="true">💳</span><span class="d"><b>Fechar a conta</b><span>Cada um marca quanto pagou</span></span></button>
         <button class="opcao" data-a="qr-conta"><span class="ic" aria-hidden="true">📱</span><span class="d"><b>Mostrar a conta no QR</b><span>Cada um aponta a câmera e vê a sua parte</span></span></button>
@@ -3499,34 +3537,24 @@ var qrcode = function() {
         ${arred !== v ? `<button class="btn ghost block" data-a="f-pagar" data-v="${arred}">Arredondou para ${$(arred)}</button>` : ""}
         ${falta > v ? `<button class="btn ghost block" data-a="f-pagar" data-v="${falta}">Pagou o que falta da mesa: ${$(falta)}</button>` : ""}
       </div>
-      <label class="amount"><span class="muted">R$</span><input id="valor" inputmode="decimal" placeholder="Outro valor" aria-label="Outro valor pago"></label>
+      <label class="amount"><span class="muted">R$</span><input id="valor" inputmode="decimal" placeholder="Outro valor" aria-label="Outro valor pago" autocomplete="off"><button class="somar" data-a="v-somar" aria-label="Somar mais um valor">+</button></label>
+      <p class="small muted" id="soma" aria-live="polite">Pagou em partes? Use o + para somar (ex.: 50+20).</p>
       <button class="btn primary block" data-a="f-pagar-outro">Confirmar outro valor</button>
       <button class="btn ghost block" data-a="f-nao-pagou">Não pagou nada</button>`);
   }
 
-  function folhaConferir() {
-    F = { tipo: "conferir" };
-    const c = conferencia();
+  function folhaConta() {
+    F = { tipo: "conta" };
+    const geral = U.contaVista === "geral", c = conferencia();
     manterScroll(() => abrirFolha(`
-      <div class="shead"><div class="d"><h2 class="h2">Conferir com a conta do bar</h2><p class="small muted">Digite o total da conta impressa. O Tito compara com tudo que a mesa lançou.</p></div>${xBtn}</div>
-      <div class="card">
-        <div class="kv"><span>Pedidos lançados</span><span class="num">${$(c.consumo)}</span></div>
-        ${M.couvert ? `<div class="kv"><span>Couvert (${M.pessoas.length} × ${$(M.couvert)})</span><span class="num">${$(c.couvert)}</span></div>` : ""}
-        <div class="kv"><span>Taxa de serviço ${Math.round(M.taxa * 100)}%</span><span class="num">${$(c.servico)}</span></div>
-        <div class="kv total"><span>O bar deveria cobrar</span><span class="num">${$(c.cheia)}</span></div>
-      </div>
+      <div class="shead"><div class="d"><h2 class="h2">${geral ? "Conta geral da mesa" : "A conta, por pessoa"}</h2><p class="small muted">${geral ? "Tudo somado, como na conta impressa do bar. Digite o total dela e o Tito confere." : "Toque numa pessoa para ver os itens e ligar ou desligar o couvert e a taxa dela."}</p></div>${xBtn}</div>
+      ${chaveVista("conta-vista", U.contaVista)}
+      ${geral ? `${htmlNotinha()}
       ${c.dif === null ? "" : c.dif === 0 ? `<div class="banner ok">Bate certinho: o bar cobrou ${$(M.contaBar)}.</div>`
         : c.dif > 0 ? `<div class="banner alerta">O bar cobrou ${$(c.dif)} a mais do que a mesa lançou. Veja se faltou lançar algum pedido ou se veio item que ninguém pediu.</div>`
         : `<div class="banner alerta">O bar cobrou ${$(-c.dif)} a menos do que a mesa lançou. Talvez algum pedido não tenha entrado na conta do bar.</div>`}
-      ${totalMesa() !== c.cheia ? `<p class="small muted">A mesa vai pagar ${$(totalMesa())}, porque nem todos pagam couvert ou taxa. A diferença de ${$(r2(c.cheia - totalMesa()))} se acerta com o garçom.</p>` : ""}
-      <label class="amount"><span class="muted">R$</span><input id="contabar" inputmode="decimal" placeholder="Total da conta do bar" aria-label="Total da conta do bar" value="${M.contaBar === null ? "" : dec(M.contaBar)}"></label>
-      <button class="btn primary block" data-a="conf-ok">Conferir</button>`));
-  }
-
-  function folhaConta() {
-    F = { tipo: "conta" };
-    manterScroll(() => abrirFolha(`
-      <div class="shead"><div class="d"><h2 class="h2">A conta, com números</h2><p class="small muted">Toque numa pessoa para ver os itens e ligar ou desligar o couvert e a taxa dela.</p></div>${xBtn}</div>
+      <label class="amount"><span class="muted">R$</span><input id="contabar" inputmode="decimal" placeholder="Total da conta impressa" aria-label="Total da conta impressa do bar" value="${M.contaBar === null || M.contaBar === undefined ? "" : dec(M.contaBar)}"></label>
+      <button class="btn primary block" data-a="conf-ok">Conferir com a conta do bar</button>` : `
       <div class="list">${M.pessoas.map(p => { const v = parte(p.id); return `
         <details class="pessoa" data-pid="${p.id}" ${(U.abertos || [D.dono]).includes(p.id) ? "open" : ""}>
           <summary>${avatar(p.id, 36)}<span class="d"><b>${esc(nome(p.id))}</b>${p.saiu ? ` <span class="badge b-ok">foi embora · pago</span>` : ""}</span><span class="v num">${$(v.total)}</span></summary>
@@ -3538,7 +3566,7 @@ var qrcode = function() {
             ${!v.linhas.length && !p.saiu && p.id !== D.dono ? `<button class="linkbtn red" data-a="levantar" data-id="${p.id}" style="align-self:flex-start">Tirar da mesa (sentou por engano)</button>` : ""}
           </div>
         </details>`; }).join("")}</div>
-      <div class="card"><div class="kv total" style="border:0;padding:0"><span>Conta da mesa</span><span class="num">${$(totalMesa())}</span></div></div>`));
+      <button class="card conta-geral-btn" data-a="conta-vista" data-v="geral"><span class="kv total" style="border:0;padding:0"><span>Conta da mesa</span><span class="num">${$(totalMesa())}</span></span><span class="small muted">Ver a conta geral e conferir com a do bar ›</span></button>`}`));
   }
 
   // ---------- toast ----------
@@ -3568,7 +3596,7 @@ var qrcode = function() {
       case "ir-abrir": U.abrir = { barId: D.bares.length ? D.bares[D.bares.length - 1].id : null, quem: [D.dono], novoBar: false, ex: true }; U.tela = "abrir"; window.scrollTo(0, 0); break;
       case "ir-ajustes": fecharFolha(); U.tela = "ajustes"; window.scrollTo(0, 0); break;
       case "ir-privacidade": U.tela = "privacidade"; window.scrollTo(0, 0); break;
-      case "ver-hist": M = D.historico[+el.dataset.i]; U.tela = "relatorio"; window.scrollTo(0, 0); break;
+      case "ver-hist": U.relVista = "pessoa"; M = D.historico[+el.dataset.i]; U.tela = "relatorio"; window.scrollTo(0, 0); break;
       case "bar": U.abrir.barId = id; U.abrir.novoBar = false; break;
       case "novo-bar": U.abrir.novoBar = true; render(); { const i = document.getElementById("nb-nome"); if (i) i.focus(); } return;
       case "nb-ex": { const on = el.getAttribute("aria-checked") !== "true"; el.setAttribute("aria-checked", on); return; }
@@ -3594,10 +3622,12 @@ var qrcode = function() {
       case "sug-enviar": {
         const t = campo("sug-texto").trim();
         if (!t) { toast("Escreva a sua sugestão"); return; }
-        const txt = `Sugestão para o Justito, de ${nomeDe(D.dono)}:\n\n${t}`;
+        const txt = `Sugestão para o JusTito, de ${nomeDe(D.dono)}:\n\n${t}`;
         window.open(`https://wa.me/${SUGESTAO_WHATS}?text=${encodeURIComponent(txt)}`, "_blank", "noopener");
         fecharFolha(); toast("Valeu pela sugestão!"); return;
       }
+      case "p-sair": folhaSair(id); return;
+      case "p-pagar": folhaPaguei(id); return;
       case "pessoa": if (pessoa(id).saiu) { toast(nomeDe(id) + " já foi embora e pagou a parte"); return; } folhaPedir(id); return;
       case "centro": folhaPedir("*"); return;
       case "ver": folhaVer(id, el.dataset.item); return;
@@ -3682,22 +3712,35 @@ var qrcode = function() {
         if (M.pedidos.some(o => o.quem.includes(id))) { toast("Tem pedido com essa pessoa"); return; }
         M.pessoas = M.pessoas.filter(p => p.id !== id); render(); folhaConta(); return;
       }
-      case "g-fechar": fecharFolha(); M.modo = "pagar"; M.fala = "Confere com a conta impressa!"; window.scrollTo(0, 0); break;
+      case "g-fechar": fecharFolha(); M.modo = "pagar"; M.fala = "Toque em cada um para marcar o pagamento!"; window.scrollTo(0, 0); break;
       case "voltar-pedir": fecharFolha(); M.modo = "pedir"; M.fala = "Psiu! É só chamar."; break;
       case "f-sair": { const sid = F.id, p = pessoa(sid); p.pago = parte(sid).total; p.pagoEm = new Date().toISOString(); p.saiu = true; p.saiuEm = p.pagoEm; fecharFolha(); M.fala = "Valeu, " + nomeDe(sid) + "! Volte sempre."; break; }
       case "paguei": if (pessoa(id).saiu) { toast(nomeDe(id) + " já pagou quando foi embora"); return; } folhaPaguei(id); return;
       case "f-pagar": case "f-pagar-outro": case "f-nao-pagou": {
         const v = a === "f-pagar" ? +el.dataset.v : a === "f-nao-pagou" ? 0 : valor(campo("valor"));
-        if (!isFinite(v)) { toast("Digite um valor, por exemplo 85,50"); return; }
-        const p = pessoa(F.id); p.pago = r2(Math.max(0, v)); p.pagoEm = new Date().toISOString(); fecharFolha(); break;
+        if (!isFinite(v)) { toast("Digite um valor, por exemplo 85,50 ou 50+35,50"); return; }
+        const p = pessoa(F.id); p.pago = r2(Math.max(0, v)); p.pagoEm = new Date().toISOString(); fecharFolha();
+        if (M.modo !== "pagar") toast(a === "f-nao-pagou" ? "Pagamento desmarcado" : `Anotado: ${nomeDe(p.id)} pagou ${$(p.pago)}`);
+        break;
       }
-      case "conferir": folhaConferir(); return;
+      case "v-somar": {
+        const i = document.getElementById("valor"); if (!i) return;
+        if (i.value.trim()) i.value = i.value.replace(/[\s+]+$/, "") + "+";
+        i.focus(); mostrarSoma(); return;
+      }
+      case "conferir": U.contaVista = "geral"; folhaConta(); return;
+      case "conta-vista": U.contaVista = el.dataset.v; folhaConta(); if (U.contaVista === "geral") { const s = layer.querySelector(".sheet"); if (s) s.scrollTop = 0; } return;
+      case "rel-vista": U.relVista = el.dataset.v; break;
       case "conf-ok": {
         const v = valor(campo("contabar"));
         if (!isFinite(v) || v <= 0) { toast("Digite o total da conta, por exemplo 312,50"); return; }
-        M.contaBar = r2(v); render(); folhaConferir(); return;
+        M.contaBar = r2(v); render(); U.contaVista = "geral"; folhaConta(); return;
       }
-      case "concluir": fecharMesa(); U.tela = "relatorio"; window.scrollTo(0, 0); tocar([[784, 0, .14], [1047, .12, .14], [1319, .24, .4]]); break;
+      case "concluir": {
+        const faltam = M.pessoas.filter(p => p.pago === null);
+        if (faltam.length) { folhaConfirmar("Fechar mesmo assim?", `Ainda não marcaram o pagamento: ${faltam.map(p => nome(p.id)).join(", ")}. No relatório, ${faltam.length === 1 ? "essa pessoa aparece" : "essas pessoas aparecem"} devendo a parte.`, "Fechar mesmo assim", "concluir-forcado"); return; }
+        concluirMesa(); break;
+      }
       case "cancelar-mesa": folhaConfirmar("Apagar esta mesa?", "Os pedidos desta mesa somem e ela não vai para o histórico.", "Apagar a mesa", "cancelar-mesa"); return;
       case "conta": folhaConta(); return;
       case "couvert": pessoa(id).couvert = !pessoa(id).couvert; render(); folhaConta(); return;
@@ -3727,7 +3770,7 @@ var qrcode = function() {
       case "backup-salvar": {
         const txt = JSON.stringify(Object.assign({ app: "justito", salvoEm: new Date().toISOString() }, D));
         const nomeArq = `justito-copia-${new Date().toISOString().slice(0, 10)}.json`, arq = new File([txt], nomeArq, { type: "application/json" });
-        if (navigator.canShare && navigator.canShare({ files: [arq] })) { navigator.share({ files: [arq], text: "Cópia de segurança do Justito" }).catch(() => { /* cancelado */ }); return; }
+        if (navigator.canShare && navigator.canShare({ files: [arq] })) { navigator.share({ files: [arq], text: "Cópia de segurança do JusTito" }).catch(() => { /* cancelado */ }); return; }
         const a2 = document.createElement("a"); a2.href = URL.createObjectURL(arq); a2.download = nomeArq; document.body.appendChild(a2); a2.click(); a2.remove();
         toast("Cópia salva nos downloads"); return;
       }
@@ -3738,6 +3781,7 @@ var qrcode = function() {
         else if (f.acao === "apagar-bar") { D.bares = D.bares.filter(b => b.id !== f.extra); if (D.mesa && D.mesa.barId === f.extra) D.mesa.barId = null; U.tela = "ajustes"; }
         else if (f.acao === "tirar-pessoa") { cadastro(f.extra).oculto = true; U.tela = "ajustes"; } // o nome continua no histórico
         else if (f.acao === "recuperar") { D = f.extra; delete D.app; delete D.salvoEm; M = D.mesa; salvar(); U.tela = "home"; toast("Dados recuperados"); }
+        else if (f.acao === "concluir-forcado") concluirMesa();
         else if (f.acao === "apagar-tudo") { D = vazio(); M = null; salvar(); U.tela = "inicio"; }
         break;
       }
@@ -3746,6 +3790,13 @@ var qrcode = function() {
     }
     render();
   });
+
+  function concluirMesa() { fecharMesa(); U.relVista = "pessoa"; U.tela = "relatorio"; window.scrollTo(0, 0); tocar([[784, 0, .14], [1047, .12, .14], [1319, .24, .4]]); }
+  function mostrarSoma() {
+    const i = document.getElementById("valor"), o = document.getElementById("soma"); if (!i || !o) return;
+    const v = valor(i.value);
+    o.textContent = i.value.includes("+") ? (isFinite(v) ? `Soma: ${$(v)}` : "Complete a conta, ex.: 50+20") : "Pagou em partes? Use o + para somar (ex.: 50+20).";
+  }
 
   // depois de agir numa ficha, reabre a mesma folha (se ainda existir)
   function reabrir() { if (F && F.tipo === "ver") { const f = F; render(); folhaVer(f.pid, f.item); } else if (F && F.tipo === "pedir") { render(); desenharPedir(); } }
@@ -3756,7 +3807,7 @@ var qrcode = function() {
     if (t.id === "backup-arq" && t.files && t.files[0]) {
       t.files[0].text().then(txt => {
         let o = null; try { o = JSON.parse(txt); } catch (e) { /* inválido */ }
-        if (!o || o.app !== "justito" || o.versao !== 1 || !Array.isArray(o.pessoas) || !Array.isArray(o.bares) || !Array.isArray(o.historico)) { toast("Esse arquivo não é uma cópia do Justito"); return; }
+        if (!o || o.app !== "justito" || o.versao !== 1 || !Array.isArray(o.pessoas) || !Array.isArray(o.bares) || !Array.isArray(o.historico)) { toast("Esse arquivo não é uma cópia do JusTito"); return; }
         folhaConfirmar("Recuperar esta cópia?", `Cópia de ${dia(o.salvoEm || Date.now())}: ${o.bares.length} bares, ${o.historico.length} mesas. O que está neste celular agora será substituído.`, "Recuperar", "recuperar", o);
       });
       t.value = ""; return;
@@ -3773,7 +3824,7 @@ var qrcode = function() {
     else return;
     salvar(); toast("Salvo");
   });
-  document.addEventListener("input", ev => { if (F && F.avulso && ev.target.dataset.campo) F.avulso[ev.target.dataset.campo] = ev.target.value; });
+  document.addEventListener("input", ev => { if (ev.target.id === "valor") mostrarSoma(); if (F && F.avulso && ev.target.dataset.campo) F.avulso[ev.target.dataset.campo] = ev.target.value; });
   document.addEventListener("toggle", ev => {
     const d = ev.target; if (!d.dataset || !d.dataset.pid) return;
     U.abertos = (U.abertos || [D.dono]).filter(x => x !== d.dataset.pid).concat(d.open ? [d.dataset.pid] : []);
